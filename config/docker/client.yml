@@ -2,6 +2,9 @@
        container_name: client
        image: parity/parity:stable
        user: parity
+       security_opt:
+       - apparmor=unconfined
+       - seccomp=unconfined
        ports:
        - 8080:8080
        - 8180:8180

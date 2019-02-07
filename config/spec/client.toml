@@ -11,7 +11,8 @@ reserved_peers = "/home/parity/reserved_peers"
 disable = false
 port = 8546
 interface = "all"
-origins = ["http://127.0.0.1:8180"]
+origins = ["all"]
+#origins = ["http://127.0.0.1:8180"]
 apis = ["web3", "eth", "net", "parity", "traces", "rpc", "secretstore"]
 hosts = ["all"]
 

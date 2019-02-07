@@ -2,6 +2,9 @@
        container_name: hostNODE_NAME 
        image: parity/parity:stable
        user: parity
+       security_opt:
+       - apparmor=unconfined
+       - seccomp=unconfined
        volumes:
        - ./deployment/chain/spec.json:/home/parity/spec.json:ro
        - ./deployment/chain/reserved_peers:/home/parity/reserved_peers:ro
