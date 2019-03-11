@@ -211,7 +211,6 @@ create_node_config_instantseal() {
 expose_container() {
 
 	if [ -z "$1" ]; then
-		echo "WE ARE ALL"
 		PORT_1=8080
 		PORT_2=8180
 		PORT_RPC=8545
