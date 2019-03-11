@@ -4,8 +4,7 @@
 
 # TODO:
 # 1. BUGFIX: Add client node. Configure properly docker compose. Actually generates error due to a bad formating of docker-compose. Indeed client service must added before the volumes.
-# 2. Expose multiple hosts. To do so a correct mapping is required. Must edit functions (i) select_exposed_container() and (ii) expose_container().
-# 3. In testing configuration with only validators and without clients every validator node need a balance to run transactions. Each account must be added to the spec.json with a balance. Edit function display_accounts().
+# 2. In testing configuration with only validators and without clients every validator node need a balance to run transactions. Each account must be added to the spec.json with a balance. Edit function display_accounts().
 
 CHAIN_NAME="parity"
 CHAIN_NODES="1"
@@ -23,7 +22,7 @@ OPTIONAL:
         --nodes number_of_nodes (if using aura / tendermint) Default: 2
         --ethstats - Enable ethstats monitoring of authority nodes. Default: Off
         --expose - Expose a specific container on ports 8180 / 8545 / 30303. Default: Config specific
-				--entrypoint - Use custom entrypoint for docker container e.g. /home/parity/bin/parity
+	--entrypoint - Use custom entrypoint for docker container e.g. /home/parity/bin/parity
 
 NOTE:
     input.json - Custom spec files can be inserted by specifiying the path to the json file.
@@ -212,6 +211,7 @@ create_node_config_instantseal() {
 expose_container() {
 
 	if [ -z "$1" ]; then
+		echo "WE ARE ALL"
 		PORT_1=8080
 		PORT_2=8180
 		PORT_RPC=8545
@@ -219,29 +219,27 @@ expose_container() {
 		PORT_NET=30303
 
 		for x in $(seq 1 $CHAIN_NODES); do
-			sed -i "s@container_name: $x@&\n       ports:\n       - $PORT_1:8080\n       - $PORT_2:8180\n       - $PORT_RPC:8545\n       - $PORT_WS:8546\n       - $PORT_NET:30303@g" docker-compose.yml
+			sed -i "s@container_name: host$x@&\n       ports:\n       - $PORT_1:8080\n       - $PORT_2:8180\n       - $PORT_RPC:8545\n       - $PORT_WS:8546\n       - $PORT_NET:30303@g" docker-compose.yml
 			((PORT_1++))
 			((PORT_2++))
-			((PORT_RPC++))
-			((PORT_WS++))
+			((PORT_RPC+=2))
+			((PORT_WS+=2))
 			((PORT_NET++))
 		done
 	else
 		sed -i "s@container_name: $1@&\n       ports:\n       - 8080:8080\n       - 8180:8180\n       - 8545:8545\n       - 8546:8546\n       - 30303:30303@g" docker-compose.yml
 
+	fi
 }
 
 # Se --expose vengono mappate le porte sugli host richiesti, altrimenti viene esposto host1 o il nodo client se presente.
-# TODO: Se client non presente, vanno esposti tutti gli host authority non solo host1. Questo significa che bisogna chiamare expose_container su ogni container e mappare porte diverse dell'host su questi.
-# in questo modo vengono esposte diverse porte della macchina host sui container che dal loro punto di vista espongono le porte default definite nel file .toml delle authority di parity.
 
 # NB could be an array of clients e.g. host1, host2, host3
 select_exposed_container() {
 
-
 	#if [ -n "$EXPOSE_CLIENT" ]; then
 	#	expose_container $EXPOSE_CLIENT
-	if [ "$EXPOSE_CLIENT" = "all"]; then
+	if [ "$EXPOSE_CLIENT" = "all" ]; then
 		expose_container
 	else
 		if [ "$CLIENT" == "0" ]; then
