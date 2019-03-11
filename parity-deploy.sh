@@ -211,7 +211,7 @@ create_node_config_instantseal() {
 # if multiple elements in input, port mapping needed
 expose_container() {
 
-	if [ -z "$1" ] then
+	if [ -z "$1" ]; then
 		PORT_1=8080
 		PORT_2=8180
 		PORT_RPC=8545
