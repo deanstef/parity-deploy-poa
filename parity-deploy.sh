@@ -22,7 +22,7 @@ OPTIONAL:
         --nodes number_of_nodes (if using aura / tendermint) Default: 2
         --ethstats - Enable ethstats monitoring of authority nodes. Default: Off
         --expose - Expose a specific container on ports 8180 / 8545 / 30303. Default: Config specific
-	--entrypoint - Use custom entrypoint for docker container e.g. /home/parity/bin/parity
+				--entrypoint - Use custom entrypoint for docker container e.g. /home/parity/bin/parity
 
 NOTE:
     input.json - Custom spec files can be inserted by specifiying the path to the json file.
@@ -227,7 +227,6 @@ expose_container() {
 		done
 	else
 		sed -i "s@container_name: $1@&\n       ports:\n       - 8080:8080\n       - 8180:8180\n       - 8545:8545\n       - 8546:8546\n       - 30303:30303@g" docker-compose.yml
-
 	fi
 }
 
@@ -285,8 +284,15 @@ display_genesis() {
 
 display_accounts() {
 
-	cat config/spec/accounts/$CHAIN_ENGINE
+				ACC_TMP=$(mktemp)
+				cat config/spec/accounts/$CHAIN_ENGINE > $ACC_TMP
+        for x in $(seq $CHAIN_NODES); do
+                ACCOUNT_ADDR=$(cat deployment/$x/address.txt)
+                sed -i "s@\"accounts\": {@&\n        \"$ACCOUNT_ADDR\": { \"balance\": \"1606938044258990275541962092341162602522202993782792835301376\" },@g" $ACC_TMP
+        done
 
+        cat $ACC_TMP
+	rm $ACC_TMP
 }
 
 ARGS="$@"
