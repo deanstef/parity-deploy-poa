@@ -2,7 +2,7 @@ version: '2.0'
 services:
    host1:
        container_name: host1
-       image: stefano/parity:stable
+       image: deanstef/parity:stable
        user: parity
        volumes:
        - ./deployment/chain/spec.json:/home/parity/spec.json:ro

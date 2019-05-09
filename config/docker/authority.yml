@@ -1,6 +1,6 @@
    hostNODE_NAME:
        container_name: hostNODE_NAME 
-       image: stefano/parity:stable
+       image: deanstef/parity:stable
        user: parity
        security_opt:
        - apparmor=unconfined
