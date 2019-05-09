@@ -1,6 +1,6 @@
    client:
        container_name: client
-       image: parity/parity:stable
+       image: stefano/parity:stable
        user: parity
        security_opt:
        - apparmor=unconfined

@@ -1,6 +1,6 @@
    client:
        container_name: client
-       image: parity/parity:stable
+       image: stefano/parity:stable
        user: parity
        ports:
        - 8080:8080

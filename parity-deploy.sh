@@ -4,7 +4,6 @@
 
 # TODO:
 # 1. BUGFIX: Add client node. Configure properly docker compose. Actually generates error due to a bad formating of docker-compose. Indeed client service must added before the volumes.
-# 2. In testing configuration with only validators and without clients every validator node need a balance to run transactions. Each account must be added to the spec.json with a balance. Edit function display_accounts().
 
 CHAIN_NAME="parity"
 CHAIN_NODES="1"
@@ -15,14 +14,14 @@ help() {
 	echo "parity-deploy.sh OPTIONS
 Usage:
 REQUIRED:
-        --config dev / aura / tendermint / validatorset / input.json / custom_chain.toml
+        --config dev / aura / tendermint / validatorset / contract / input.json / custom_chain.toml
 
 OPTIONAL:
         --name name_of_chain. Default: parity
         --nodes number_of_nodes (if using aura / tendermint) Default: 2
         --ethstats - Enable ethstats monitoring of authority nodes. Default: Off
         --expose - Expose a specific container on ports 8180 / 8545 / 30303. Default: Config specific
-				--entrypoint - Use custom entrypoint for docker container e.g. /home/parity/bin/parity
+	--entrypoint - Use custom entrypoint for docker container e.g. /home/parity/bin/parity
 
 NOTE:
     input.json - Custom spec files can be inserted by specifiying the path to the json file.
@@ -69,7 +68,7 @@ create_node_params() {
 	PRIV_KEY=$(cat $DEST_DIR/key.priv)
 	./ethstore insert ${PRIV_KEY} $DEST_DIR/password --dir $DEST_DIR/parity >$DEST_DIR/address.txt
 
-# echo [val1] > [val2] substitute the content of [val2] with [val1]
+  # echo [val1] > [val2] substitute the content of [val2] with [val1]
 	echo "NETWORK_NAME=$CHAIN_NAME" >.env
 
 }
@@ -196,8 +195,11 @@ display_name() {
 create_node_config_poa() {
 
 	ENGINE_SIGNER=$(cat deployment/$1/address.txt)
-	cat config/spec/authority_round.toml | sed -e "s/ENGINE_SIGNER/$ENGINE_SIGNER/g" >deployment/$1/authority.toml
-
+	if [ "$CHAIN_ENGINE" == "contract" ]; then
+		cat config/spec/authority_unlock.toml | sed -e "s/ENGINE_SIGNER/$ENGINE_SIGNER/g; s/ACCOUNT_ADDR/$ENGINE_SIGNER/g" >deployment/$1/authority.toml
+	else
+		cat config/spec/authority_round.toml | sed -e "s/ENGINE_SIGNER/$ENGINE_SIGNER/g" >deployment/$1/authority.toml
+	fi
 }
 
 create_node_config_instantseal() {
@@ -253,7 +255,7 @@ display_engine() {
 	dev)
 		cat config/spec/engine/instantseal
 		;;
-	aura | validatorset | tendermint)
+	aura | validatorset | tendermint | contract)
 		for x in $(seq 1 $CHAIN_NODES); do
 			VALIDATOR=$(cat deployment/$x/address.txt)
 			RESERVED_PEERS="$RESERVED_PEERS $VALIDATOR"
@@ -272,8 +274,11 @@ display_engine() {
 
 display_params() {
 
-	cat config/spec/params/$CHAIN_ENGINE
+	if [ "$CHAIN_ENGINE" == "contract" ]; then
+		CHAIN_ENGINE=aura
+	fi
 
+	cat config/spec/params/$CHAIN_ENGINE
 }
 
 display_genesis() {
@@ -292,7 +297,7 @@ display_accounts() {
         done
 
         cat $ACC_TMP
-	rm $ACC_TMP
+				rm $ACC_TMP
 }
 
 ARGS="$@"
@@ -383,7 +388,7 @@ elif [ "$CHAIN_ENGINE" == "dev" ]; then
 	build_docker_config_instantseal
 
 # --config aura|validatorset|tendermint
-elif [ "$CHAIN_ENGINE" == "aura" ] || [ "$CHAIN_ENGINE" == "validatorset" ] || [ "$CHAIN_ENGINE" == "tendermint" ] || [ -f "$CHAIN_ENGINE" ]; then
+elif [ "$CHAIN_ENGINE" == "aura" ] || [ "$CHAIN_ENGINE" == "validatorset" ] || [ "$CHAIN_ENGINE" == "tendermint" ] || [ "$CHAIN_ENGINE" == "contract" ] || [ -f "$CHAIN_ENGINE" ]; then
 	if [ $CHAIN_NODES ]; then
 		# per ogni nodo genera i file di configurazione
 		for x in $(seq $CHAIN_NODES); do
@@ -396,7 +401,7 @@ elif [ "$CHAIN_ENGINE" == "aura" ] || [ "$CHAIN_ENGINE" == "validatorset" ] || [
 	fi
 
   # Create the chain spec file .json
-	if [ "$CHAIN_ENGINE" == "aura" ] || [ "$CHAIN_ENGINE" == "validatorset" ] || [ "$CHAIN_ENGINE" == "tendermint" ]; then
+	if [ "$CHAIN_ENGINE" == "aura" ] || [ "$CHAIN_ENGINE" == "validatorset" ] || [ "$CHAIN_ENGINE" == "tendermint" ] || [ "$CHAIN_ENGINE" == "contract" ]; then
 		build_spec >deployment/chain/spec.json
 	else
 		mkdir -p deployment/chain
