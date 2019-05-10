@@ -11,6 +11,8 @@
        - 8545:8545
        - 8546:8546
        - 30303:30303
+       cap_add:
+       - NET_ADMIN
        volumes:
        - ./deployment/chain/spec.json:/home/parity/spec.json:ro
        - ./deployment/chain/reserved_peers:/home/parity/reserved_peers:ro

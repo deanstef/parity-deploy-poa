@@ -5,6 +5,8 @@
        security_opt:
        - apparmor=unconfined
        - seccomp=unconfined
+       cap_add:
+       - NET_ADMIN
        volumes:
        - ./deployment/chain/spec.json:/home/parity/spec.json:ro
        - ./deployment/chain/reserved_peers:/home/parity/reserved_peers:ro
