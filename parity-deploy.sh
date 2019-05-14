@@ -68,9 +68,8 @@ create_node_params() {
 	PRIV_KEY=$(cat $DEST_DIR/key.priv)
 	./ethstore insert ${PRIV_KEY} $DEST_DIR/password --dir $DEST_DIR/parity >$DEST_DIR/address.txt
 
-  # echo [val1] > [val2] substitute the content of [val2] with [val1]
+        # echo [val1] > [val2] substitute the content of [val2] with [val1]
 	echo "NETWORK_NAME=$CHAIN_NAME" >.env
-
 }
 
 # For each node we capture the enodes in reserved_peers
@@ -116,11 +115,10 @@ build_docker_config_poa() {
 
 	build_docker_config_ethstats
 
-  # add user privileges for containers
+        # add user privileges for containers within custom volumes
 	cat $DOCKER_INCLUDE >>docker-compose.yml
 
 	chown -R $USER data/
-
 }
 
 build_docker_config_ethstats() {
@@ -369,6 +367,7 @@ fi
 ###				docker-compose implementation
 
 # If chain network param is present( --chain), load in each container config the name of the network and, if also parity parameters are present, they are also loaded within the command key.
+# --> configuration to run a single client node of a predefined chain.
 if [ ! -z "$CHAIN_NETWORK" ]; then
 	if [ ! -z "$PARITY_OPTIONS" ]; then
 		cat config/docker/chain.yml | sed -e "s/CHAIN_NAME/$CHAIN_NETWORK/g" | sed -e "s@-d /home/parity/data@-d /home/parity/data $PARITY_OPTIONS@g" >docker-compose.yml
@@ -377,7 +376,7 @@ if [ ! -z "$CHAIN_NETWORK" ]; then
 		cat config/docker/chain.yml | sed -e "s/CHAIN_NAME/$CHAIN_NETWORK/g" >docker-compose.yml
 	fi
 
-# The custom chain network has not been specified. Currently the script supports two chains: dev/aura.
+# Else the custom chain network has not been specified. Currently the script supports two chains: dev/aura.
 
 # --config dev
 elif [ "$CHAIN_ENGINE" == "dev" ]; then
@@ -397,10 +396,10 @@ elif [ "$CHAIN_ENGINE" == "aura" ] || [ "$CHAIN_ENGINE" == "validatorset" ] || [
 			create_node_config_poa $x
 		done
 		build_docker_config_poa
-		build_docker_client # BUG. docker-compose bad formatted. the client service must be added befor the volumes.
+		build_docker_client # BUG. docker-compose bad formatted. the client service must be added before the volumes.
 	fi
 
-  # Create the chain spec file .json
+        # Create the chain spec file .json
 	if [ "$CHAIN_ENGINE" == "aura" ] || [ "$CHAIN_ENGINE" == "validatorset" ] || [ "$CHAIN_ENGINE" == "tendermint" ] || [ "$CHAIN_ENGINE" == "contract" ]; then
 		build_spec >deployment/chain/spec.json
 	else
@@ -422,8 +421,8 @@ fi
 
 if [ ! -z $ENTRYPOINT ]; then
     ENTRYPOINT_TMP=$(mktemp)
-	cat docker-compose.yml | sed -e "s@user: root@user: root\n       entrypoint: ${ENTRYPOINT}@g" > $ENTRYPOINT_TMP
-	mv $ENTRYPOINT_TMP docker-compose.yml
+    cat docker-compose.yml | sed -e "s@user: parity@user: parity\n       entrypoint: ${ENTRYPOINT}@g" > $ENTRYPOINT_TMP
+    mv $ENTRYPOINT_TMP docker-compose.yml
 fi
 
 select_exposed_container
