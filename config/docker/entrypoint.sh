@@ -1,51 +1,51 @@
 #!/bin/bash
 # Copyright 2019 Stefano De Angelis
+DELAY=100
+JITTER=5
+CORRELATION=10
+DISTRIBUTION=normal
 
 help() {
 
-echo "entrypoint.sh 
-Usage:
-REQUIRED:
-        --config dev / aura / tendermint / validatorset / contract / input.json / custom_chain.toml
+echo "entrypoint.sh
 
-OPTIONAL:
-        --name name_of_chain. Default: parity
-        --nodes number_of_nodes (if using aura / tendermint) Default: 2
-        --ethstats - Enable ethstats monitoring of authority nodes. Default: Off
-        --expose - Expose a specific container on ports 8180 / 8545 / 30303. Default: Config specific
-        --entrypoint - Use custom entrypoint for docker container e.g. /home/parity/bin/parity
+Usage:
+
+REQUIRED:
+        -d <netem_delay> (default 100ms)
+        -j <netem_jitter> (default 5ms)
+        -c <netem_correlation> (default 10%)
+        -t <netem_distribution> (default normal)
 
 NOTE:
-    input.json - Custom spec files can be inserted by specifiying the path to the json file.
-    custom_chain.toml - Custom toml file defining multiple nodes. See customchain/config/example.toml for an example.
+    Custom script fot tc (TrafficControl) command configuration. In this work we use tc to setup network delays.
+    netem emulator is used to inject network delays in each docker container, it requires the following parameters:
+    - Network delay
+    - Delay jitter
+    - Correlation
+    - Distribution {uniform | normal | pareto |  paretonormal}
 "
 }
 
-ARGS="$@"
-
-while [ "$1" != "" ]; do
-        case $1 in
-        -d | --delay)
-                shift
-                DELAY=$1
-                ;;
-        -j | --jitter)
-                shift
-                JITTER=$1
-                ;;
-        -c | --correlation)
-                shift
-                CORRELATION=$1
-                ;;
-        --distribution)
-                shift
-                DISTRIBUTION=$1
-                ;;
-        -h | --help)
-                help
-                exit
-                ;;
-        *) PARITY_OPTIONS="$PARITY_OPTIONS $1 " ;;
-        esac
-        shift
+while getopts d:j:c:d:h option
+do
+  case "${option}" in
+    d) DELAY=${OPTARG};;
+    j) JITTER=${OPTARG};;
+    c) CORRELATION=${OPTARG};;
+    t) DISTRIBUTION=$OPTARG;;
+    h) help
+       exit
+       ;;
+  esac
 done
+
+echo "$DELAY"ms
+echo "$JITTER"ms
+echo "$CORRELATION"%
+echo $DISTRIBUTION
+echo "sudo tc qdisc add dev eth0 root netem delay "$DELAY"ms "$JITTER"ms "$CORRELATION"% distribution $DISTRIBUTION"
+#--chain /home/parity/spec.json --config /home/parity/authority.toml -d /home/parity/data
+
+# 1. Setup of tc command for any netem delay, jitter, correlation, distribution.
+# 2. Run the /bin/parity command with all the required parameters (vd. command in old authority's docker-compose service)

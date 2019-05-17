@@ -21,7 +21,7 @@ OPTIONAL:
         --nodes number_of_nodes (if using aura / tendermint) Default: 2
         --ethstats - Enable ethstats monitoring of authority nodes. Default: Off
         --expose - Expose a specific container on ports 8180 / 8545 / 30303. Default: Config specific
-	--entrypoint - Use custom entrypoint for docker container e.g. /home/parity/bin/parity
+	      --entrypoint - Use custom entrypoint for docker container e.g. /home/parity/bin/parity
 
 NOTE:
     input.json - Custom spec files can be inserted by specifiying the path to the json file.
@@ -336,6 +336,10 @@ while [ "$1" != "" ]; do
 		shift
 		ENTRYPOINT=$1
 		;;
+	--netem)
+		shift
+		NETEM_PARAMS="$1"
+		;;
 	-h | --help)
 		help
 		exit
@@ -422,6 +426,39 @@ fi
 if [ ! -z $ENTRYPOINT ]; then
     ENTRYPOINT_TMP=$(mktemp)
     cat docker-compose.yml | sed -e "s@user: parity@user: parity\n       entrypoint: ${ENTRYPOINT}@g" > $ENTRYPOINT_TMP
+    	if [ ! -z "$NETEM_PARAMS" ]; then
+		#echo $NETEM_PARAMS
+		#echo $(wc -w <<< "$NETEM_PARAMS")
+		COUNT=0
+		for param in $NETEM_PARAMS; do
+			((COUNT+=1))
+			case $COUNT in
+				1)
+					NETEM_DELAY=$param
+					;;
+				2)
+					NETEM_JITTER=$param
+					;;
+				3)	NETEM_CORRELATION=$param
+					;;
+				4)	NETEM_DISTRIBUTION=$param
+					;;
+			esac
+		done
+
+		if [ ! -z $NETEM_DELAY ]; then
+			echo "DELAY="$NETEM_DELAY
+		fi
+                if [ ! -z $NETEM_JITTER ]; then
+                        echo "JITTER="$NETEM_JITTER
+                fi
+                if [ ! -z $NETEM_CORRELATION ]; then
+                        echo "CORRELATION="$NETEM_CORRELATION
+                fi
+                if [ ! -z $NETEM_DISTRIBUTION ]; then
+                        echo "DISTRIBUTION="$NETEM_DISTRIBUTION
+                fi
+	fi
     mv $ENTRYPOINT_TMP docker-compose.yml
 fi
 
