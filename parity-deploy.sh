@@ -105,11 +105,46 @@ build_docker_config_poa() {
 
 	echo "version: '2.0'" >docker-compose.yml
 	echo "services:" >>docker-compose.yml
+	# ADD IF ENTRYPOINT HERE.
+	if [ ! -z $ENTRYPOINT ]; then
+	    cat config/docker/authority_entrypoint.yml | sed -e "s/NODE_NAME/$x/g" | sed -e "s@-d /home/parity/data@-d /home/parity/data $PARITY_OPTIONS@g" >>docker-compose.yml
+	    mkdir -p data/$x
 
-	for x in $(seq 1 $CHAIN_NODES); do
-		cat config/docker/authority.yml | sed -e "s/NODE_NAME/$x/g" | sed -e "s@-d /home/parity/data@-d /home/parity/data $PARITY_OPTIONS@g" >>docker-compose.yml
-		mkdir -p data/$x
-	done
+	    ENTRYPOINT_TMP=$(mktemp)
+	    cat docker-compose.yml | sed -e "s@user: parity@user: parity\n       entrypoint: ${ENTRYPOINT}@g" > $ENTRYPOINT_TMP
+	    if [ ! -z "$NETEM_PARAMS" ]; then
+	    	COUNT=0
+		ARR=()
+		for param in $NETEM_PARAMS; do
+			((COUNT+=1))
+			case $COUNT in
+				1)
+					NETEM_DELAY=$param
+					ARR+=($NETEM_DELAY)
+					;;
+				2)
+					NETEM_JITTER=$param
+					ARR+=($NETEM_JITTER)
+					;;
+				3)
+					NETEM_CORRELATION=$param
+					ARR+=($NETEM_CORRELATION)
+					;;
+				4)
+					NETEM_DISTRIBUTION=$param
+					ARR+=($NETEM_DISTRIBUTION)
+					;;
+			esac
+		done
+	     fi
+	     echo ${ARR[@]}
+	     mv $ENTRYPOINT_TMP docker-compose.yml
+	else
+		for x in $(seq 1 $CHAIN_NODES); do
+			cat config/docker/authority.yml | sed -e "s/NODE_NAME/$x/g" | sed -e "s@-d /home/parity/data@-d /home/parity/data $PARITY_OPTIONS@g" >>docker-compose.yml
+			mkdir -p data/$x
+		done
+	fi
 
 	# BUGFIX. Here should look for client service. If present call build_docker_client()
 
@@ -426,39 +461,42 @@ fi
 if [ ! -z $ENTRYPOINT ]; then
     ENTRYPOINT_TMP=$(mktemp)
     cat docker-compose.yml | sed -e "s@user: parity@user: parity\n       entrypoint: ${ENTRYPOINT}@g" > $ENTRYPOINT_TMP
-    	if [ ! -z "$NETEM_PARAMS" ]; then
-		#echo $NETEM_PARAMS
-		#echo $(wc -w <<< "$NETEM_PARAMS")
-		COUNT=0
-		for param in $NETEM_PARAMS; do
-			((COUNT+=1))
-			case $COUNT in
-				1)
-					NETEM_DELAY=$param
-					;;
-				2)
-					NETEM_JITTER=$param
-					;;
-				3)	NETEM_CORRELATION=$param
-					;;
-				4)	NETEM_DISTRIBUTION=$param
-					;;
-			esac
-		done
+    if [ ! -z "$NETEM_PARAMS" ]; then
+			#echo $NETEM_PARAMS
+			#echo $(wc -w <<< "$NETEM_PARAMS")
+			COUNT=0
+			for param in $NETEM_PARAMS; do
+				((COUNT+=1))
+				case $COUNT in
+					1)
+						NETEM_DELAY=$param
+						;;
+					2)
+						NETEM_JITTER=$param
+						;;
+					3)
+						NETEM_CORRELATION=$param
+						;;
+					4)
+						NETEM_DISTRIBUTION=$param
+						;;
+				esac
+			done
 
-		if [ ! -z $NETEM_DELAY ]; then
-			echo "DELAY="$NETEM_DELAY
+			if [ ! -z $NETEM_DELAY ]; then
+				echo "DELAY="$NETEM_DELAY
+			fi
+      if [ ! -z $NETEM_JITTER ]; then
+        echo "JITTER="$NETEM_JITTER
+      fi
+      if [ ! -z $NETEM_CORRELATION ]; then
+        echo "CORRELATION="$NETEM_CORRELATION
+      fi
+      if [ ! -z $NETEM_DISTRIBUTION ]; then
+        echo "DISTRIBUTION="$NETEM_DISTRIBUTION
+      fi
 		fi
-                if [ ! -z $NETEM_JITTER ]; then
-                        echo "JITTER="$NETEM_JITTER
-                fi
-                if [ ! -z $NETEM_CORRELATION ]; then
-                        echo "CORRELATION="$NETEM_CORRELATION
-                fi
-                if [ ! -z $NETEM_DISTRIBUTION ]; then
-                        echo "DISTRIBUTION="$NETEM_DISTRIBUTION
-                fi
-	fi
+
     mv $ENTRYPOINT_TMP docker-compose.yml
 fi
 
