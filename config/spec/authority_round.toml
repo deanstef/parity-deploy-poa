@@ -26,3 +26,6 @@ origins = ["all"]
 #origins = ["http://127.0.0.1:8180"]
 apis = ["web3", "eth", "net", "parity", "traces", "rpc", "secretstore"]
 hosts = ["all"]
+
+[misc]
+log_file = "/home/parity/data/parity.log"
