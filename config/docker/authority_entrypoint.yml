@@ -8,7 +8,7 @@
        cap_add:
        - NET_ADMIN
        volumes:
-       - ./config/docker/entrypoint.sh:/home/parity/entrypoint.sh:ro
+       - ./config/utils/entrypoint.sh:/home/parity/entrypoint.sh:ro
        - ./deployment/chain/spec.json:/home/parity/spec.json:ro
        - ./deployment/chain/reserved_peers:/home/parity/reserved_peers:ro
        - ./deployment/NODE_NAME/password:/home/parity/password:ro
