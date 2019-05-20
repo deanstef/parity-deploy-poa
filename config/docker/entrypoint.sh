@@ -40,12 +40,9 @@ do
   esac
 done
 
-echo "$DELAY"ms
-echo "$JITTER"ms
-echo "$CORRELATION"%
-echo $DISTRIBUTION
-echo "sudo tc qdisc add dev eth0 root netem delay "$DELAY"ms "$JITTER"ms "$CORRELATION"% distribution $DISTRIBUTION"
-#--chain /home/parity/spec.json --config /home/parity/authority.toml -d /home/parity/data
-
-# 1. Setup of tc command for any netem delay, jitter, correlation, distribution.
-# 2. Run the /bin/parity command with all the required parameters (vd. command in old authority's docker-compose service)
+#echo "$DELAY"ms
+#echo "$JITTER"ms
+#echo "$CORRELATION"%
+#echo $DISTRIBUTION
+tc qdisc add dev eth0 root netem delay "$DELAY"ms "$JITTER"ms "$CORRELATION"% distribution $DISTRIBUTION
+/bin/parity --chain /home/parity/spec.json --config /home/parity/authority.toml -d /home/parity/data

@@ -21,11 +21,15 @@ OPTIONAL:
         --nodes number_of_nodes (if using aura / tendermint) Default: 2
         --ethstats - Enable ethstats monitoring of authority nodes. Default: Off
         --expose - Expose a specific container on ports 8180 / 8545 / 30303. Default: Config specific
-	      --entrypoint - Use custom entrypoint for docker container e.g. /home/parity/bin/parity
+	--entrypoint - Use custom entrypoint for docker container (e.g. /home/parity/entrypoint.sh) Default: /bin/parity
+	--netem - Networ Emulation parameters. Specify the parameters for network delay | jitter | correlation | distribution of packets
+	 	  between containers. (e.g. "100 40 5 normal") 
 
 NOTE:
     input.json - Custom spec files can be inserted by specifiying the path to the json file.
     custom_chain.toml - Custom toml file defining multiple nodes. See customchain/config/example.toml for an example.
+
+    --netem must be specified only in case of entrypoint.sh.
 "
 
 }
@@ -115,20 +119,24 @@ build_docker_config_poa() {
 			((COUNT+=1))
 			case $COUNT in
 				1)
-					NETEM_DELAY=$param
-					ARR+=("\"$NETEM_DELAY\"")
+					PARAM_D="\"-d\""
+					NETEM_DELAY="\"$param\""
+					ARR+=($PARAM_D $NETEM_DELAY)
 					;;
 				2)
-					NETEM_JITTER=$param
-					ARR+=("\"$NETEM_JITTER\"")
+					PARAM_J="\"-j\""
+					NETEM_JITTER="\"$param\""
+					ARR+=($PARAM_J $NETEM_JITTER)
 					;;
 				3)
-					NETEM_CORRELATION=$param
-					ARR+=("\"$NETEM_CORRELATION\"")
+					PARAM_C="\"-c\""
+					NETEM_CORRELATION="\"$param\""
+					ARR+=($PARAM_C $NETEM_CORRELATION)
 					;;
 				4)
-					NETEM_DISTRIBUTION=$param
-					ARR+=("\"$NETEM_DISTRIBUTION\"")
+					PARAM_T="\"-t\""
+					NETEM_DISTRIBUTION="\"$param\""
+					ARR+=($PARAM_T $NETEM_DISTRIBUTION)
 					;;
 			esac
 		done
