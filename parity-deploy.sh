@@ -106,51 +106,50 @@ build_docker_config_poa() {
 	echo "version: '2.0'" >docker-compose.yml
 	echo "services:" >>docker-compose.yml
 	# ADD IF ENTRYPOINT HERE.
-	if [ ! -z $ENTRYPOINT ]; then
-	    cat config/docker/authority_entrypoint.yml | sed -e "s/NODE_NAME/$x/g" | sed -e "s@-d /home/parity/data@-d /home/parity/data $PARITY_OPTIONS@g" >>docker-compose.yml
-	    mkdir -p data/$x
 
-	    ENTRYPOINT_TMP=$(mktemp)
-	    cat docker-compose.yml | sed -e "s@user: parity@user: parity\n       entrypoint: ${ENTRYPOINT}@g" > $ENTRYPOINT_TMP
-	    if [ ! -z "$NETEM_PARAMS" ]; then
-	    	COUNT=0
+	# Generate COMMA_ARR string with all the netem params
+	if [ ! -z "$NETEM_PARAMS" ]; then
+		COUNT=0
 		ARR=()
 		for param in $NETEM_PARAMS; do
 			((COUNT+=1))
 			case $COUNT in
 				1)
 					NETEM_DELAY=$param
-					ARR+=($NETEM_DELAY)
+					ARR+=("\"$NETEM_DELAY\"")
 					;;
 				2)
 					NETEM_JITTER=$param
-					ARR+=($NETEM_JITTER)
+					ARR+=("\"$NETEM_JITTER\"")
 					;;
 				3)
 					NETEM_CORRELATION=$param
-					ARR+=($NETEM_CORRELATION)
+					ARR+=("\"$NETEM_CORRELATION\"")
 					;;
 				4)
 					NETEM_DISTRIBUTION=$param
-					ARR+=($NETEM_DISTRIBUTION)
+					ARR+=("\"$NETEM_DISTRIBUTION\"")
 					;;
 			esac
 		done
-	     fi
-	     echo ${ARR[@]}
-	     mv $ENTRYPOINT_TMP docker-compose.yml
-	else
-		for x in $(seq 1 $CHAIN_NODES); do
+		COMMA_ARR=$(IFS=,; echo "${ARR[*]}")
+	fi
+
+	for x in $(seq 1 $CHAIN_NODES); do
+		if [ ! -z "$COMMA_ARR" ]; then
+			cat config/docker/authority_entrypoint.yml | sed -e "s/NODE_NAME/$x/g" | sed -e "s@-d /home/parity/data@-d /home/parity/data $PARITY_OPTIONS@g" | sed -e "s/X/$COMMA_ARR/g" >>docker-compose.yml
+			mkdir -p data/$x
+		else
 			cat config/docker/authority.yml | sed -e "s/NODE_NAME/$x/g" | sed -e "s@-d /home/parity/data@-d /home/parity/data $PARITY_OPTIONS@g" >>docker-compose.yml
 			mkdir -p data/$x
-		done
-	fi
+		fi
+	done
 
 	# BUGFIX. Here should look for client service. If present call build_docker_client()
 
 	build_docker_config_ethstats
 
-        # add user privileges for containers within custom volumes
+  # add user privileges for containers within custom volumes
 	cat $DOCKER_INCLUDE >>docker-compose.yml
 
 	chown -R $USER data/
@@ -461,7 +460,8 @@ fi
 if [ ! -z $ENTRYPOINT ]; then
     ENTRYPOINT_TMP=$(mktemp)
     cat docker-compose.yml | sed -e "s@user: parity@user: parity\n       entrypoint: ${ENTRYPOINT}@g" > $ENTRYPOINT_TMP
-    if [ ! -z "$NETEM_PARAMS" ]; then
+		: '
+		if [ ! -z "$NETEM_PARAMS" ]; then
 			#echo $NETEM_PARAMS
 			#echo $(wc -w <<< "$NETEM_PARAMS")
 			COUNT=0
@@ -496,7 +496,7 @@ if [ ! -z $ENTRYPOINT ]; then
         echo "DISTRIBUTION="$NETEM_DISTRIBUTION
       fi
 		fi
-
+		'
     mv $ENTRYPOINT_TMP docker-compose.yml
 fi
 
