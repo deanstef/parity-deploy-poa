@@ -23,7 +23,9 @@ OPTIONAL:
         --expose - Expose a specific container on ports 8180 / 8545 / 30303. Default: Config specific
 	--entrypoint - Use custom entrypoint for docker container (e.g. /home/parity/entrypoint.sh) Default: /bin/parity
 	--netem - Networ Emulation parameters. Specify the parameters for network delay | jitter | correlation | distribution of packets
-	 	  between containers. (e.g. "100 40 5 normal") 
+	 	  between containers. (e.g. "100 40 5 normal")
+	--cpus - Number of CPUs for each container. Number is a fractional number.
+	--mem - Memory limit for each container. Unit can be one of b|k|m|g.
 
 NOTE:
     input.json - Custom spec files can be inserted by specifiying the path to the json file.
@@ -107,7 +109,7 @@ build_spec() {
 
 build_docker_config_poa() {
 
-	echo "version: '2.0'" >docker-compose.yml
+	echo "version: '2.2'" >docker-compose.yml
 	echo "services:" >>docker-compose.yml
 	# ADD IF ENTRYPOINT HERE.
 
@@ -157,7 +159,7 @@ build_docker_config_poa() {
 
 	build_docker_config_ethstats
 
-  # add user privileges for containers within custom volumes
+  	# add user privileges for containers within custom volumes
 	cat $DOCKER_INCLUDE >>docker-compose.yml
 
 	chown -R $USER data/
@@ -382,6 +384,14 @@ while [ "$1" != "" ]; do
 		shift
 		NETEM_PARAMS="$1"
 		;;
+	--cpus)
+		shift
+		CPUS="$1"
+		;;
+	--mem)
+		shift
+		MEMORY="$1"
+		;;
 	-h | --help)
 		help
 		exit
@@ -463,6 +473,18 @@ if [ ! -z $PARITY_RELEASE ]; then
 	DOCKER_TMP=$(mktemp)
 	cat docker-compose.yml | sed -e "s@image: parity/parity:stable@image: parity/parity:${PARITY_RELEASE}@g" > $DOCKER_TMP
 	mv $DOCKER_TMP docker-compose.yml
+fi
+
+if [ ! -z $CPUS ]; then
+	CPUS_TMP=$(mktemp)
+	cat docker-compose.yml | sed -e "s@user: parity@user: parity\n       cpus: ${CPUS}@g" > $CPUS_TMP
+	mv $CPUS_TMP docker-compose.yml
+fi
+
+if [ ! -z $MEMORY ]; then
+        MEM_TMP=$(mktemp)
+        cat docker-compose.yml | sed -e "s@user: parity@user: parity\n       mem_limit: ${MEMORY}@g" > $MEM_TMP
+        mv $MEM_TMP docker-compose.yml
 fi
 
 if [ ! -z $ENTRYPOINT ]; then
