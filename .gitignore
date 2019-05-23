@@ -54,3 +54,5 @@ deployment/
 docker-compose.yml
 jmeter.log
 parity-deploy.iml
+ethkey
+ethstore
