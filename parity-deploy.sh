@@ -18,20 +18,24 @@ REQUIRED:
 
 OPTIONAL:
         --name name_of_chain. Default: parity
-        --nodes number_of_nodes (if using aura / tendermint) Default: 2
+        --nodes number_of_nodes (if using aura / tendermint) Default: 1
         --ethstats - Enable ethstats monitoring of authority nodes. Default: Off
-        --expose - Expose a specific container on ports 8180 / 8545 / 30303. Default: Config specific
+	--release - Specify a custom image release. Defaultu: stable
+	--enable-client - *under development*
+        --expose - Expose a specific container on ports 8180 / 8545 / 30303. If "all" map any container to endpoints. Default: Config specific
+	--chain - If chain is pecified a single client container is generated to be connected at such chain
 	--entrypoint - Use custom entrypoint for docker container (e.g. /home/parity/entrypoint.sh) Default: /bin/parity
 	--netem - Networ Emulation parameters. Specify the parameters for network delay | jitter | correlation | distribution of packets
-	 	  between containers. (e.g. "100 40 5 normal")
+	 	  between containers. (e.g. "100 40 5 normal"). See NetEm man for more info
 	--cpus - Number of CPUs for each container. Number is a fractional number.
 	--mem - Memory limit for each container. Unit can be one of b|k|m|g.
+	--* - Specify additional config options. Technology supported: Parity
 
 NOTE:
     input.json - Custom spec files can be inserted by specifiying the path to the json file.
     custom_chain.toml - Custom toml file defining multiple nodes. See customchain/config/example.toml for an example.
 
-    --netem must be specified only in case of entrypoint.sh.
+    --netem must be specified only in case of entrypoint configuration.
 "
 
 }
@@ -147,6 +151,7 @@ build_docker_config_poa() {
 
 	for x in $(seq 1 $CHAIN_NODES); do
 		if [ ! -z "$COMMA_ARR" ]; then
+			# BUG. PARITY_OPTIONS are never loaded in entrypoint mode. Those options should be passed through the entrypoint script as COMMAND ARG.
 			cat config/docker/authority_entrypoint.yml | sed -e "s/NODE_NAME/$x/g" | sed -e "s@-d /home/parity/data@-d /home/parity/data $PARITY_OPTIONS@g" | sed -e "s/X/$COMMA_ARR/g" >>docker-compose.yml
 			mkdir -p data/$x
 		else
@@ -232,16 +237,16 @@ display_name() {
 	cat config/spec/name | sed -e "s/CHAIN_NAME/$CHAIN_NAME/g"
 }
 
-# Generate the .toml config file for a poa node.
-
+# Generate the .toml config file for a poa node. Every node uses the unlocked configuration.
 create_node_config_poa() {
-
 	ENGINE_SIGNER=$(cat deployment/$1/address.txt)
-	if [ "$CHAIN_ENGINE" == "contract" ]; then
-		cat config/spec/authority_unlock.toml | sed -e "s/ENGINE_SIGNER/$ENGINE_SIGNER/g; s/ACCOUNT_ADDR/$ENGINE_SIGNER/g" >deployment/$1/authority.toml
-	else
-		cat config/spec/authority_round.toml | sed -e "s/ENGINE_SIGNER/$ENGINE_SIGNER/g" >deployment/$1/authority.toml
-	fi
+	cat config/spec/authority_round-unlock.toml | sed -e "s/ENGINE_SIGNER/$ENGINE_SIGNER/g; s/ACCOUNT_ADDR/$ENGINE_SIGNER/g" >deployment/$1/authority.toml
+
+	#if [ "$CHAIN_ENGINE" == "contract" ]; then
+	#	cat config/spec/authority_round-unlock.toml | sed -e "s/ENGINE_SIGNER/$ENGINE_SIGNER/g; s/ACCOUNT_ADDR/$ENGINE_SIGNER/g" >deployment/$1/authority.toml
+	#else
+	#	cat config/spec/authority_round-unlock.toml | sed -e "s/ENGINE_SIGNER/$ENGINE_SIGNER/g" >deployment/$1/authority.toml
+	#fi
 }
 
 create_node_config_instantseal() {
@@ -468,6 +473,7 @@ else
 	echo "Could not find spec file: $CHAIN_ENGINE"
 fi
 
+# Will be used something similar for the specification of byzantine nodes
 if [ ! -z $PARITY_RELEASE ]; then
     echo "Custom release ${PARITY_RELEASE} selected. WARNING: This may not be compatible with all parity docker images"
 	DOCKER_TMP=$(mktemp)

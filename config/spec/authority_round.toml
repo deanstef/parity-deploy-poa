@@ -6,18 +6,24 @@ password = ["/home/parity/password"]
 
 [network]
 reserved_peers = "/home/parity/reserved_peers"
+discovery = false
 
 [rpc]
 interface = "0.0.0.0"
 cors = ["all"]
 hosts = ["all"]
 apis = ["web3", "eth", "net", "parity", "traces", "rpc", "personal", "parity_accounts", "signer", "parity_set"]
+server_threads = 8
 
 [mining]
 usd_per_tx = "0"
 reseal_on_txs = "none"
 engine_signer = "ENGINE_SIGNER"
 force_sealing = true
+gas_floor_target = "40000000"
+tx_queue_per_sender = 8192
+tx_queue_mem_limit = 0
+tx_queue_size = 32768
 
 [websockets]
 disable = false
@@ -30,4 +36,5 @@ hosts = ["all"]
 
 [misc]
 #logging = "finality=trace"
+#logging = "basicauthority,chain=trace"
 log_file = "/home/parity/data/parity.log"

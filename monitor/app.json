@@ -33,8 +33,8 @@
     {
       "NODE_ENV"        : "production",
       "RPC_HOST"        : "host2",
-      "RPC_PORT"        : "8545",
-      "LISTENING_PORT"  : "30303",
+      "RPC_PORT"        : "8547",
+      "LISTENING_PORT"  : "30304",
       "INSTANCE_NAME"   : "host2",
       "WS_SERVER"       : "ws://dashboard:3000",
       "WS_SECRET"       : "OurDashSecret93%",
@@ -54,13 +54,33 @@
     {
       "NODE_ENV"        : "production",
       "RPC_HOST"        : "host3",
-      "RPC_PORT"        : "8545",
-      "LISTENING_PORT"  : "30303",
+      "RPC_PORT"        : "8549",
+      "LISTENING_PORT"  : "30305",
       "INSTANCE_NAME"   : "host3",
       "WS_SERVER"       : "ws://dashboard:3000",
       "WS_SECRET"       : "OurDashSecret93%",
       "VERBOSITY"       : 3
     }
-  } 
-
+   },
+   {
+    "name"              : "host4",
+    "script"            : "app.js",
+    "log_date_format"   : "YYYY-MM-DD HH:mm Z",
+    "merge_logs"        : false,
+    "watch"             : true,
+    "max_restarts"      : 10,
+    "exec_interpreter"  : "node",
+    "exec_mode"         : "fork_mode",
+    "env":
+    {
+      "NODE_ENV"        : "production",
+      "RPC_HOST"        : "hos4",
+      "RPC_PORT"        : "8551",
+      "LISTENING_PORT"  : "30306",
+      "INSTANCE_NAME"   : "host4",
+      "WS_SERVER"       : "ws://dashboard:3000",
+      "WS_SECRET"       : "OurDashSecret93%",
+      "VERBOSITY"       : 3
+    }
+   } 
 ]
