@@ -35,6 +35,5 @@ apis = ["web3", "eth", "net", "parity", "traces", "rpc", "secretstore"]
 hosts = ["all"]
 
 [misc]
-#logging = "finality=trace"
-#logging = "basicauthority,chain=trace"
+logging = "finality=debug,rpc=debug"
 log_file = "/home/parity/data/parity.log"

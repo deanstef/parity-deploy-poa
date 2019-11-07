@@ -11,7 +11,7 @@ CLIENT="0"
 DOCKER_INCLUDE="include/docker-compose.yml"
 help() {
 
-	echo "parity-deploy.sh OPTIONS
+echo "parity-deploy.sh OPTIONS
 Usage:
 REQUIRED:
         --config dev / aura / tendermint / validatorset / contract / input.json / custom_chain.toml
@@ -20,13 +20,13 @@ OPTIONAL:
         --name name_of_chain. Default: parity
         --nodes number_of_nodes (if using aura / tendermint) Default: 1
         --ethstats - Enable ethstats monitoring of authority nodes. Default: Off
-	--release - Specify a custom image release. Defaultu: stable
+	--release - Specify a custom image release. Default: stable
 	--enable-client - *under development*
-        --expose - Expose a specific container on ports 8180 / 8545 / 30303. If "all" map any container to endpoints. Default: Config specific
+        --expose - Expose a specific container on ports 8180 / 8545 / 30303. If \"all\" map any container to endpoints. Default: Config specific
 	--chain - If chain is pecified a single client container is generated to be connected at such chain
 	--entrypoint - Use custom entrypoint for docker container (e.g. /home/parity/entrypoint.sh) Default: /bin/parity
 	--netem - Networ Emulation parameters. Specify the parameters for network delay | jitter | correlation | distribution of packets
-	 	  between containers. (e.g. "100 40 5 normal"). See NetEm man for more info
+	 	  between containers. (e.g. \"100 40 5 normal\"). See NetEm man for more info
 	--cpus - Number of CPUs for each container. Number is a fractional number.
 	--mem - Memory limit for each container. Unit can be one of b|k|m|g.
 	--* - Specify additional config options. Technology supported: Parity
@@ -336,15 +336,14 @@ display_genesis() {
 
 display_accounts() {
 
-				ACC_TMP=$(mktemp)
-				cat config/spec/accounts/$CHAIN_ENGINE > $ACC_TMP
+	ACC_TMP=$(mktemp)
+	cat config/spec/accounts/$CHAIN_ENGINE > $ACC_TMP
         for x in $(seq $CHAIN_NODES); do
                 ACCOUNT_ADDR=$(cat deployment/$x/address.txt)
                 sed -i "s@\"accounts\": {@&\n        \"$ACCOUNT_ADDR\": { \"balance\": \"1606938044258990275541962092341162602522202993782792835301376\" },@g" $ACC_TMP
         done
-
         cat $ACC_TMP
-				rm $ACC_TMP
+	rm $ACC_TMP
 }
 
 ARGS="$@"
@@ -537,3 +536,64 @@ if [ ! -z $ENTRYPOINT ]; then
 fi
 
 select_exposed_container
+
+# GENERATION OF INFO FILE
+# TODO: STEP, GAS_BLOCK, GAS_GENESIS, TX_GAS and THREADS must be selected programmatically
+
+SERVER_IP=$(ifconfig | grep -E 'inet.[0-9]' | grep -v '127.0.0.1' | grep -v '172.17.0.1' | awk '{ print $2}')
+PLATFORM=""
+VERSION=""
+THREADS=2
+NETEM_VAL="false"
+NETEM_DELAY=""
+NETEM_JITTER=""
+NETEM_CORRELATION=""
+NETEM_DISTRIBUTION=""
+
+if [ "$CHAIN_ENGINE" == "aura" ]; then
+        PLATFORM="parity"
+        VERSION="Parity-Ethereum v2.4.5-stable"
+fi
+if [ ! -z $CPUS ]; then
+        THREADS=$(expr $CPUS \* 2)
+fi
+if [ ! -z "$NETEM_PARAMS" ]; then
+        COUNT=0
+        NETEM_VAL="true"
+        for param in $NETEM_PARAMS; do
+                ((COUNT+=1))
+                case $COUNT in
+                        1)
+                                NETEM_DELAY="\"$param\""
+                                ;;
+                         2)
+                                NETEM_JITTER="\"$param\""
+                                ;;
+                         3)
+                                NETEM_CORRELATION="\"$param\""
+                                ;;
+                         4)
+                                NETEM_DISTRIBUTION="\"$param\""
+                                ;;
+                esac
+        done
+fi
+
+cat config/utils/netinfo.json | sed -e "s/X_SERVER/\"$SERVER_IP\"/g; s/X_PLAT/\"$PLATFORM\"/g; s/X_V/\"$VERSION\"/g; s/X_CONS/\"$CHAIN_ENGINE\"/g; s/N_N/\"$CHAIN_NODES\"/g; s/X_CPU/\"$CPUS\"/g; s/X_RAM/\"$MEMORY\"/g; s/X_THREADS/\"$THREADS\"/g; s/Y_NETEM/\"$NETEM_VAL\"/g; s/X_DELAY/\"$NETEM_DELAY\"/g; s/X_JITTER/\"$NETEM_JITTER\"/g; s/X_CORR/\"$NETEM_CORRELATION\"/g" > data/netinfo.json
+
+VALIDATOR=""
+VALIDATORS=""
+for x in $(seq 1 $CHAIN_NODES); do
+        VALIDATOR=$(cat deployment/$x/address.txt)
+	PWD=$(cat deployment/$x/password)
+        #RESERVED_PEERS="$RESERVED_PEERS $VALIDATOR"
+        VALIDATORS="$VALIDATORS\t\t{\n\t\t \"address\":\"$VALIDATOR\",\n\t\t \"pwd\":\"$PWD\"\n\t\t},\n"
+	#VALIDATORS="$VALIDATORS \"$VALIDATOR\","
+done
+# Remove trailing , from validator list
+VALIDATORS=$(echo $VALIDATORS | sed 's/\(.*\),.*/\1/')
+NODES_TMP=$(mktemp)
+cat data/netinfo.json | sed -e "s@X_NODES@$VALIDATORS@g" > $NODES_TMP
+mv $NODES_TMP data/netinfo.json
+
+cat data/netinfo.json

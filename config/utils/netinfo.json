@@ -1,0 +1,26 @@
+{ "server_addr":X_SERVER,
+  "system": {
+	"platform":X_PLAT,
+	"version":X_V,
+	"consensus":X_CONS,
+	"nodes":N_N,
+	"nodes_info": [ 
+X_NODES 
+	],
+	"cpu":X_CPU,
+	"ram":X_RAM,
+	"step":5,
+	"gas_block":40000000,
+	"gas_genesis":40000000,
+	"tx_gas":21000,
+	"serv_threads":X_THREADS
+  },
+  "network": {
+	"netem":Y_NETEM,
+	"netem_delay":X_DELAY,
+	"delay_jitter":X_JITTER,
+	"delay_correlation":X_CORR,
+	"delay_distribution":X_DISTR
+  },
+  "byzantine":false
+}
