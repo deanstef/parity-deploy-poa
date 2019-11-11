@@ -579,7 +579,7 @@ if [ ! -z "$NETEM_PARAMS" ]; then
         done
 fi
 
-cat config/utils/netinfo.json | sed -e "s/X_SERVER/\"$SERVER_IP\"/g; s/X_PLAT/\"$PLATFORM\"/g; s/X_V/\"$VERSION\"/g; s/X_CONS/\"$CHAIN_ENGINE\"/g; s/N_N/\"$CHAIN_NODES\"/g; s/X_CPU/\"$CPUS\"/g; s/X_RAM/\"$MEMORY\"/g; s/X_THREADS/\"$THREADS\"/g; s/Y_NETEM/\"$NETEM_VAL\"/g; s/X_DELAY/\"$NETEM_DELAY\"/g; s/X_JITTER/\"$NETEM_JITTER\"/g; s/X_CORR/\"$NETEM_CORRELATION\"/g; s/X_DISTRIBUTION/\"NETEM_DISTRIBUTION\"/g" > data/netinfo.json
+cat config/utils/netinfo.json | sed -e "s/X_SERVER/\"$SERVER_IP\"/g; s/X_PLAT/\"$PLATFORM\"/g; s/X_V/\"$VERSION\"/g; s/X_CONS/\"$CHAIN_ENGINE\"/g; s/N_N/\"$CHAIN_NODES\"/g; s/X_CPU/\"$CPUS\"/g; s/X_RAM/\"$MEMORY\"/g; s/X_THREADS/\"$THREADS\"/g; s/Y_NETEM/\"$NETEM_VAL\"/g; s/X_DELAY/\"$NETEM_DELAY\"/g; s/X_JITTER/\"$NETEM_JITTER\"/g; s/X_CORR/\"$NETEM_CORRELATION\"/g; s/X_DISTR/\"$NETEM_DISTRIBUTION\"/g" > data/netinfo.json
 
 VALIDATOR=""
 VALIDATORS=""
