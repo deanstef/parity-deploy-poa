@@ -282,6 +282,7 @@ expose_container() {
 # Se --expose vengono mappate le porte sugli host richiesti, altrimenti viene esposto host1 o il nodo client se presente.
 
 # NB could be an array of clients e.g. host1, host2, host3
+# TODO: Manage better the expose param. Should be single container OR all.
 select_exposed_container() {
 
 	#if [ -n "$EXPOSE_CLIENT" ]; then
